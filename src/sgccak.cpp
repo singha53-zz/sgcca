@@ -12,6 +12,8 @@ using namespace Rcpp;
 //
 // [[Rcpp::depends(RcppArmadillo)]]
 
+typedef std::vector<double> stdvec;
+
 // [[Rcpp::export]]
 List sgccak_cpp(List A, 
   NumericMatrix C, 
@@ -40,13 +42,16 @@ List sgccak_cpp(List A,
     arma::mat U, V;
     arma::vec S;
     arma::svd(U, S, V, X, "standard");
-    arma:: mat LOADINGS = V.col(1);
-    a[i] = LOADINGS;
+    arma::vec LOADINGS = V.col(1);
+    a[i] = arma::conv_to<stdvec>::from(LOADINGS);
   }
   } else if (init == "random") {
     // a <- lapply(pjs, rnorm)
+  for(int i = 0; i < J; ++i){
+    a[i] = rnorm(pjs[i]);
+  }
   } else {
-    // stop("init should be either random or svd.")
+    stop("init should be either random or svd.");
   }
   
   return List::create(Named("J", J), 
@@ -67,12 +72,13 @@ C <- matrix(c(0, 1, 1, 0), nrow = 2, ncol = 2)
 c1 <- c(0.5, 0.5)
 scheme = "centroid"
 scale = TRUE
-init = "svd"
+init = "random"
 tol = 0.0001
 bias = TRUE
 verbose = TRUE
-result <- sgccak_cpp(A, C, c1, scheme, scale, tol, init,bias, verbose)
+result <- sgccak_cpp(A, C, c1, scheme, scale, tol, init, bias, verbose)
 result
+
 
 
 */
