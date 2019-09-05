@@ -28,31 +28,46 @@ List sgccak_cpp(List A,
   // Initialize variables
   int J = A.size();
   NumericVector pjs;
+  int n;
   for(int i = 0; i < J; ++i) {
     NumericMatrix x = A[i];
     pjs.push_back(x.ncol());
+    n = x.nrow();
   }
   
   // initialize loadings
-  R_xlen_t n = J;
-  List a(n);
+  List a(J);
   if (init == "svd") {
-  for(int i = 0; i < J; ++i){
-    const arma::mat& X = A[i];
-    arma::mat U, V;
-    arma::vec S;
-    arma::svd(U, S, V, X, "standard");
-    arma::vec LOADINGS = V.col(1);
-    a[i] = arma::conv_to<stdvec>::from(LOADINGS);
-  }
+    for(int i = 0; i < J; ++i){
+      const arma::mat& X = A[i];
+      arma::mat U, V;
+      arma::vec S;
+      arma::svd(U, S, V, X, "standard");
+      arma::vec LOADINGS = V.col(1);
+      a[i] = arma::conv_to<stdvec>::from(LOADINGS);
+    }
   } else if (init == "random") {
-    // a <- lapply(pjs, rnorm)
-  for(int i = 0; i < J; ++i){
-    a[i] = rnorm(pjs[i]);
-  }
+    for(int i = 0; i < J; ++i){
+      a[i] = rnorm(pjs[i]);
+    }
   } else {
     stop("init should be either random or svd.");
   }
+
+  if (is_true(any(c1 > 1)) | is_true(any(c1 > 1))){
+    stop("L1 constraints must vary between 1/sqrt(p_j) and 1.");
+  }
+  
+  arma::vec penalties = c1 * sqrt(pjs);
+  // int iter = 1;
+  // double converg, crit;
+  NumericMatrix Y(n, J);
+  NumericMatrix Z(n, J);
+  // for (q in 1:J) {
+  //   Y[, q] <- apply(A[[q]], 1, miscrossprod, a[[q]])
+  //   a[[q]] <- soft.threshold(a[[q]], const[q])
+  //   a[[q]] <- as.vector(a[[q]])/norm2(a[[q]])
+  // }
   
   return List::create(Named("J", J), 
     Named("pjs", pjs),
@@ -78,7 +93,5 @@ bias = TRUE
 verbose = TRUE
 result <- sgccak_cpp(A, C, c1, scheme, scale, tol, init, bias, verbose)
 result
-
-
 
 */
